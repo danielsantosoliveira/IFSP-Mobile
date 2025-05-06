@@ -7,9 +7,12 @@ void main() {
 class Task {
   String title;
   bool isDone;
+  bool isLiked;
 
-  Task(this.title, {this.isDone = false});
+  Task(this.title, {this.isDone = false, this.isLiked = false});
 }
+
+enum TaskFilter { all, liked, done }
 
 class MyApp extends StatelessWidget {
   final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(
@@ -58,6 +61,19 @@ class _TaskListScreenState extends State<TaskListScreen> {
   final List<Task> tasks = [];
   final TextEditingController _taskController = TextEditingController();
 
+  TaskFilter currentFilter = TaskFilter.all;
+
+  List<Task> get filteredTasks {
+    switch (currentFilter) {
+      case TaskFilter.liked:
+        return tasks.where((task) => task.isLiked).toList();
+      case TaskFilter.done:
+        return tasks.where((task) => task.isDone).toList();
+      case TaskFilter.all:
+        return tasks;
+    }
+  }
+
   void _addTask(String title) {
     if (title.isEmpty) return;
     setState(() {
@@ -104,16 +120,52 @@ class _TaskListScreenState extends State<TaskListScreen> {
     });
   }
 
+  void _toggleLike(int index) {
+    setState(() {
+      tasks[index].isLiked = !tasks[index].isLiked;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = widget.currentTheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Minha Lista de Tarefas'),
         actions: [
+          // Filtro de tarefas
+          PopupMenuButton<TaskFilter>(
+            icon: const Icon(Icons.filter_list),
+            tooltip: "Filtrar tarefas",
+            onSelected: (filter) {
+              setState(() {
+                currentFilter = filter;
+              });
+            },
+            itemBuilder:
+                (context) => [
+                  CheckedPopupMenuItem(
+                    value: TaskFilter.all,
+                    checked: currentFilter == TaskFilter.all,
+                    child: const Text("Todas"),
+                  ),
+                  CheckedPopupMenuItem(
+                    value: TaskFilter.liked,
+                    checked: currentFilter == TaskFilter.liked,
+                    child: const Text("Curtidas"),
+                  ),
+                  CheckedPopupMenuItem(
+                    value: TaskFilter.done,
+                    checked: currentFilter == TaskFilter.done,
+                    child: const Text("Concluídas"),
+                  ),
+                ],
+          ),
+          // Tema
           PopupMenuButton<ThemeMode>(
             icon: const Icon(Icons.color_lens),
-            tooltip: "Definição do Tema",
+            tooltip: "Configurar tema",
             onSelected: widget.onThemeChanged,
             itemBuilder:
                 (context) => [
@@ -138,6 +190,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
       ),
       body: Column(
         children: [
+          // Campo de adição de tarefa
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
@@ -156,15 +209,18 @@ class _TaskListScreenState extends State<TaskListScreen> {
               ],
             ),
           ),
+          // Lista de tarefas
           Expanded(
             child: ListView.builder(
-              itemCount: tasks.length,
+              itemCount: filteredTasks.length,
               itemBuilder: (_, index) {
-                final task = tasks[index];
+                final task = filteredTasks[index];
+                final taskIndex = tasks.indexOf(task);
+
                 return ListTile(
                   leading: Checkbox(
                     value: task.isDone,
-                    onChanged: (_) => _toggleDone(index),
+                    onChanged: (_) => _toggleDone(taskIndex),
                   ),
                   title: Text(
                     task.title,
@@ -179,17 +235,34 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
+                        icon: Icon(
+                          task.isLiked ? Icons.favorite : Icons.favorite_border,
+                          color: task.isLiked ? Colors.red : null,
+                        ),
+                        onPressed: () => _toggleLike(taskIndex),
+                      ),
+                      IconButton(
                         icon: const Icon(Icons.edit),
-                        onPressed: () => _editTask(index),
+                        onPressed: () => _editTask(taskIndex),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete),
-                        onPressed: () => _deleteTask(index),
+                        onPressed: () => _deleteTask(taskIndex),
                       ),
                     ],
                   ),
                 );
               },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                'Total: ${filteredTasks.length} tarefa(s)',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
             ),
           ),
         ],
