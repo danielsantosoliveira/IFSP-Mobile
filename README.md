@@ -1,4 +1,4 @@
-# IFSP-Mobile - Flutter
+# IFSP-Mobile - Flutter - ToDo
 Entrega de atividades da disciplina Desenvolvimento para Dispositivos Móveis
 Itens implementados:
 1. ToDo List;
@@ -10,7 +10,7 @@ Atenção: Para rodar este APP será necessário ter o  [Flutter](https://docs.f
 ## Passos para a instalação e execução do APP:
 1. Clone o projeto   
 ```shell
-$ git clone git@github.com:danielsantosoliveira/IFSP-Mobile.git
+$ git clone git@github.com:danielsantosoliveira/IFSP-Mobile-ToDo.git
 ```
 2. Instale os pacotes:
 ```shell
